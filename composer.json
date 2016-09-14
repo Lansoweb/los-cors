@@ -1,0 +1,21 @@
+{
+  "name" : "los/los-cors",
+  "description" : "PHP CORS middleware",
+  "require" : {
+    "php" : "^7.0",
+    "neomerx/cors-psr7" : "^1.0",
+    "container-interop/container-interop": "^1.1"
+  },
+  "license" : "MIT",
+  "autoload" : {
+    "psr-4" : {
+      "LosMiddleware\\LosCors\\" : "src/"
+    }
+  },
+  "type" : "library",
+  "homepage" : "https://github.com/lansoweb/los-cors",
+  "authors" : [ {
+    "name" : "Leandro Silva",
+    "homepage" : "http://leandrosilva.info/"
+  } ]
+}
