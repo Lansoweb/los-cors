@@ -40,19 +40,9 @@ return [
           */
         'allowed_credentials' => false,
     ],
-
     'dependencies' => [
         'factories' => [
             LosMiddleware\LosCors\CorsMiddleware::class => LosMiddleware\LosCors\CorsMiddlewareFactory::class,
         ],
     ],
-
-    'middleware_pipeline' => [
-        'always' => [
-            'middleware' => [
-                LosMiddleware\LosCors\CorsMiddleware::class
-            ],
-        ],
-    ],
-
 ];

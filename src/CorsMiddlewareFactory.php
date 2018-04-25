@@ -1,8 +1,8 @@
 <?php
 namespace LosMiddleware\LosCors;
 
-use Interop\Container\ContainerInterface;
 use Neomerx\Cors\Strategies\Settings;
+use Psr\Container\ContainerInterface;
 
 class CorsMiddlewareFactory
 {

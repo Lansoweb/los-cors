@@ -5,25 +5,32 @@ use Neomerx\Cors\Analyzer;
 use Neomerx\Cors\Contracts\AnalysisResultInterface;
 use Neomerx\Cors\Contracts\Strategies\SettingsStrategyInterface;
 use Neomerx\Cors\Strategies\Settings;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Zend\Diactoros\Response;
 
-final class CorsMiddleware
+final class CorsMiddleware implements MiddlewareInterface
 {
+    /** @var SettingsStrategyInterface */
     private $settings;
 
+    /**
+     * CorsMiddleware constructor.
+     * @param SettingsStrategyInterface|null $settings
+     */
     public function __construct(SettingsStrategyInterface $settings = null)
     {
         $this->settings = $settings ?: new Settings();
     }
 
     /**
-     * @param Request $request
-     * @param Response $response
-     * @param null|callable $next
-     * @return null|Response
+     * @param ServerRequestInterface $request
+     * @param RequestHandlerInterface $handler
+     * @return ResponseInterface
      */
-    public function __invoke(Request $request, Response $response, callable $next = null)
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $cors = Analyzer::instance($this->settings)->analyze($request);
 
@@ -32,16 +39,17 @@ final class CorsMiddleware
             case AnalysisResultInterface::ERR_ORIGIN_NOT_ALLOWED:
             case AnalysisResultInterface::ERR_METHOD_NOT_SUPPORTED:
             case AnalysisResultInterface::ERR_HEADERS_NOT_SUPPORTED:
-                return $response->withStatus(403);
+                return (new Response())->withStatus(403);
 
             case AnalysisResultInterface::TYPE_REQUEST_OUT_OF_CORS_SCOPE:
-                return $next($request, $response);
+                return $handler->handle($request);
 
             case AnalysisResultInterface::TYPE_PRE_FLIGHT_REQUEST:
                 $corsHeaders = $cors->getResponseHeaders();
+                $response = new Response();
                 foreach ($corsHeaders as $header => $value) {
                     /* Diactoros errors on integer values. */
-                    if (!is_array($value)) {
+                    if (! is_array($value)) {
                         $value = (string)$value;
                     }
                     $response = $response->withHeader($header, $value);
@@ -49,13 +57,13 @@ final class CorsMiddleware
                 return $response->withStatus(200);
 
             default:
-                $response = $next($request, $response);
+                $response = $handler->handle($request);
 
                 $corsHeaders = $cors->getResponseHeaders();
                 foreach ($corsHeaders as $header => $value) {
                     /* Diactoros errors on integer values. */
-                    if (!is_array($value)) {
-                        $value = (string)$value;
+                    if (! is_array($value)) {
+                        $value = (string) $value;
                     }
                     $response = $response->withHeader($header, $value);
                 }
