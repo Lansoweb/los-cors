@@ -12,6 +12,8 @@ $ composer require los/los-cors
 
 ## Usage
 
+Include the ```Los\Cors\CorsMiddleware``` and it's factory  ```Los\Cors\CorsMiddlewareFactory``` to your pipeline and use the configuration bellow.
+
 ```php
 /**
   * Set the list of allowed origins domain with protocol.
@@ -53,7 +55,6 @@ $ composer require los/los-cors
 'allowed_credentials' => false,
 ```
 
-### Zend Expressive
+### Laminas / Mezzio
 
-If you are using [expressive-skeleton](https://github.com/zendframework/zend-expressive-skeleton), you can copy `config/los-cors.global.php.dist` to `config/autoload/los-cors.global.php` and modify configuration as your needs.
-
+If you are using [mezzio-skeleton](https://github.com/mezzio/mezzio-skeleton), you can copy `config/los-cors.global.php.dist` to `config/autoload/los-cors.global.php` and modify the configuration as needed.
