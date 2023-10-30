@@ -1,6 +1,10 @@
 <?php
-namespace LosMiddleware\LosCors;
 
+declare(strict_types=1);
+
+namespace Los\Cors;
+
+use Laminas\Diactoros\Response;
 use Neomerx\Cors\Analyzer;
 use Neomerx\Cors\Contracts\AnalysisResultInterface;
 use Neomerx\Cors\Contracts\Strategies\SettingsStrategyInterface;
@@ -9,27 +13,19 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Zend\Diactoros\Response;
+
+use function is_array;
 
 final class CorsMiddleware implements MiddlewareInterface
 {
     /** @var SettingsStrategyInterface */
     private $settings;
 
-    /**
-     * CorsMiddleware constructor.
-     * @param SettingsStrategyInterface|null $settings
-     */
-    public function __construct(SettingsStrategyInterface $settings = null)
+    public function __construct(?SettingsStrategyInterface $settings = null)
     {
         $this->settings = $settings ?: new Settings();
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param RequestHandlerInterface $handler
-     * @return ResponseInterface
-     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $cors = Analyzer::instance($this->settings)->analyze($request);
@@ -46,11 +42,11 @@ final class CorsMiddleware implements MiddlewareInterface
 
             case AnalysisResultInterface::TYPE_PRE_FLIGHT_REQUEST:
                 $corsHeaders = $cors->getResponseHeaders();
-                $response = new Response();
+                $response    = new Response();
                 foreach ($corsHeaders as $header => $value) {
                     /* Diactoros errors on integer values. */
                     if (! is_array($value)) {
-                        $value = (string)$value;
+                        $value = (string) $value;
                     }
                     $response = $response->withHeader($header, $value);
                 }
