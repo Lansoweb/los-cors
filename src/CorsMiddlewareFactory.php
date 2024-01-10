@@ -34,19 +34,23 @@ class CorsMiddlewareFactory
         $settings = new Settings();
 
         $origin = array_fill_keys($corsConfig['allowed_origins'], true);
-        $settings->setRequestAllowedOrigins($origin);
+        $settings->setAllowedOrigins($origin);
 
         $methods = array_fill_keys($corsConfig['allowed_methods'], true);
-        $settings->setRequestAllowedMethods($methods);
+        $settings->setAllowedMethods($methods);
 
         $headers = array_fill_keys($corsConfig['allowed_headers'], true);
         $headers = array_change_key_case($headers, CASE_LOWER);
-        $settings->setRequestAllowedHeaders($headers);
+        $settings->setAllowedHeaders($headers);
 
         $headers = array_fill_keys($corsConfig['expose_headers'], true);
-        $settings->setResponseExposedHeaders($headers);
+        $settings->setExposedHeaders($headers);
 
-        $settings->setRequestCredentialsSupported((bool) $corsConfig['credentials']);
+        if ((bool) $corsConfig['credentials']) {
+            $settings->setCredentialsSupported();
+        } else {
+            $settings->setCredentialsNotSupported();
+        }
         $settings->setPreFlightCacheMaxAge($corsConfig['max_age']);
 
         return new CorsMiddleware($settings);

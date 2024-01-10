@@ -7,7 +7,7 @@ namespace Los\Cors;
 use Laminas\Diactoros\Response;
 use Neomerx\Cors\Analyzer;
 use Neomerx\Cors\Contracts\AnalysisResultInterface;
-use Neomerx\Cors\Contracts\Strategies\SettingsStrategyInterface;
+use Neomerx\Cors\Contracts\AnalysisStrategyInterface;
 use Neomerx\Cors\Strategies\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -18,10 +18,9 @@ use function is_array;
 
 final class CorsMiddleware implements MiddlewareInterface
 {
-    /** @var SettingsStrategyInterface */
-    private $settings;
+    private AnalysisStrategyInterface $settings;
 
-    public function __construct(?SettingsStrategyInterface $settings = null)
+    public function __construct(?AnalysisStrategyInterface $settings = null)
     {
         $this->settings = $settings ?: new Settings();
     }
