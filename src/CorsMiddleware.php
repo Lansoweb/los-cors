@@ -16,12 +16,27 @@ use Psr\Http\Message\UriInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
+use function array_merge;
 use function is_array;
+use function is_string;
 
 final class CorsMiddleware implements MiddlewareInterface
 {
+    /** @phpstan-ignore-next-line */
     private array $options = [];
 
+     /**
+      * @var array{
+      *  origin_server: string,
+      *  allowed_origins: array<string>,
+      *  allowed_methods: array<string>,
+      *  allowed_headers: array<string>,
+      *  exposed_headers: array<string>,
+      *  allowed_credentials: bool,
+      *  enable_check_host: bool,
+      *  cache_max_age: int,
+      * }
+      */
     private array $defaultOptions = [
         'allowed_origins'     => [],
         'allowed_methods'     => [],
@@ -33,6 +48,7 @@ final class CorsMiddleware implements MiddlewareInterface
         'enable_check_host'   => false,
     ];
 
+    /** @phpstan-ignore-next-line */
     public function __construct(array $options = [])
     {
         $this->options = array_merge($this->defaultOptions, $options);
@@ -79,7 +95,7 @@ final class CorsMiddleware implements MiddlewareInterface
         }
     }
 
-    private function createCorsSettings(ServerRequestInterface $request) : AnalysisStrategyInterface
+    private function createCorsSettings(ServerRequestInterface $request): AnalysisStrategyInterface
     {
         $server = $this->serverOrigin($request->getUri());
 
