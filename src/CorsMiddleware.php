@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Los\Cors;
 
 use Laminas\Diactoros\Response;
+use Laminas\Diactoros\Uri;
 use Neomerx\Cors\Analyzer;
 use Neomerx\Cors\Contracts\AnalysisResultInterface;
 use Neomerx\Cors\Contracts\AnalysisStrategyInterface;
 use Neomerx\Cors\Strategies\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -18,16 +20,27 @@ use function is_array;
 
 final class CorsMiddleware implements MiddlewareInterface
 {
-    private AnalysisStrategyInterface $settings;
+    private array $options = [];
 
-    public function __construct(?AnalysisStrategyInterface $settings = null)
+    private array $defaultOptions = [
+        'allowed_origins'     => [],
+        'allowed_methods'     => [],
+        'allowed_headers'     => [],
+        'exposed_headers'     => [],
+        'allowed_credentials' => false,
+        'cache_max_age'       => 0,
+        'origin_server'       => '',
+        'enable_check_host'   => false,
+    ];
+
+    public function __construct(array $options = [])
     {
-        $this->settings = $settings ?: new Settings();
+        $this->options = array_merge($this->defaultOptions, $options);
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $cors = Analyzer::instance($this->settings)->analyze($request);
+        $cors = Analyzer::instance($this->createCorsSettings($request))->analyze($request);
 
         switch ($cors->getRequestType()) {
             case AnalysisResultInterface::ERR_NO_HOST_HEADER:
@@ -64,5 +77,49 @@ final class CorsMiddleware implements MiddlewareInterface
                 }
                 return $response;
         }
+    }
+
+    private function createCorsSettings(ServerRequestInterface $request) : AnalysisStrategyInterface
+    {
+        $server = $this->serverOrigin($request->getUri());
+
+        $settings = new Settings();
+        $settings->init($server->getScheme(), $server->getHost(), $server->getPort() ?? 80)
+            ->setExposedHeaders($this->options["exposed_headers"])
+            ->setPreFlightCacheMaxAge($this->options["cache_max_age"])
+            ->enableAllOriginsAllowed()
+            ->enableAllMethodsAllowed()
+            ->enableAllHeadersAllowed();
+
+        if (! empty($this->options["allowed_origins"])) {
+            $settings->setAllowedOrigins($this->options["allowed_origins"]);
+        }
+
+        if (! empty($this->options["allowed_methods"])) {
+            $settings->setAllowedMethods($this->options["allowed_methods"]);
+        }
+
+        if (! empty($this->options["allowed_headers"])) {
+            $settings->setAllowedHeaders($this->options["allowed_headers"]);
+        }
+
+        if ($this->options["allowed_credentials"]) {
+            $settings->setCredentialsSupported();
+        }
+
+        if ($this->options['enable_check_host']) {
+            $settings->enableCheckHost();
+        }
+
+        return $settings;
+    }
+
+    private function serverOrigin(UriInterface $server): UriInterface
+    {
+        if (! is_string($this->options['origin_server']) || empty($this->options['origin_server'])) {
+            return $server;
+        }
+
+        return new Uri($this->options['origin_server']);
     }
 }
